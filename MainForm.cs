@@ -39,8 +39,20 @@ namespace MilkDropMessenger {
       };
 
 #pragma warning disable CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate (possibly because of nullability attributes).
-      txtMessage.KeyDown += new KeyEventHandler(txtMessage_KeyDown);
+      txtMessage.KeyDown += new KeyEventHandler(txtBoxes_KeyDown);
+      txtParameters.KeyDown += new KeyEventHandler(txtBoxes_KeyDown);
 #pragma warning restore CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate (possibly because of nullability attributes).
+
+      // txtParameters.AutoCompleteSource = AutoCompleteSource.CustomSource;
+      // txtParameters.AutoCompleteCustomSource = new AutoCompleteStringCollection();
+      txtParameters.DropDownStyle = ComboBoxStyle.DropDown;
+      txtParameters.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+      if (MilkDropMessenger.Properties.Settings.Default.Parameters?.Count > 0) {
+        txtParameters.Items.AddRange(MilkDropMessenger.Properties.Settings.Default.Parameters.Cast<string>().ToArray());
+        txtParameters.Text = MilkDropMessenger.Properties.Settings.Default.Parameters[0];
+      } else {
+        txtParameters.Text = "font=Arial|size=32|time=3.5|x=0.5|y=0.5|bold=1|r=255|g=0|b=0|growth=2.0";
+      }
     }
 
     private void button1_Click(object sender, EventArgs e) {
@@ -66,8 +78,6 @@ namespace MilkDropMessenger {
       }, IntPtr.Zero);
 
       if (foundWindow != IntPtr.Zero) {
-        statusBar.Text = ($"Found window title: {foundWindowTitle}");
-
         string message = "MSG|text=" + txtMessage.Text;
         if (txtParameters.Text.Length > 0) {
           message += "|" + txtParameters.Text;
@@ -83,6 +93,8 @@ namespace MilkDropMessenger {
         };
 
         SendMessageW(foundWindow, WM_COPYDATA, IntPtr.Zero, ref cds);
+        statusBar.Text = ($"Sent message to window titled '{foundWindowTitle}'");
+
 
         Marshal.FreeHGlobal(messagePtr);
 
@@ -93,7 +105,7 @@ namespace MilkDropMessenger {
       }
     }
 
-    private void txtMessage_KeyDown(object sender, KeyEventArgs e) {
+    private void txtBoxes_KeyDown(object sender, KeyEventArgs e) {
       if (e.KeyCode == Keys.Enter) {
         e.SuppressKeyPress = true; // Prevent the beep sound on Enter key press
         button1.PerformClick();
@@ -116,6 +128,28 @@ namespace MilkDropMessenger {
 
     private void OpenURL(string url) {
       Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+    }
+
+    private void label4_DoubleClick(object sender, EventArgs e) {
+      txtParameters.Items.Clear();
+      MilkDropMessenger.Properties.Settings.Default.Parameters.Clear();
+      MilkDropMessenger.Properties.Settings.Default.Save();
+      statusBar.Text = "Saved parameters cleared.";
+    }
+
+    private void btnSaveParam_Click(object sender, EventArgs e) {
+      if (!MilkDropMessenger.Properties.Settings.Default.Parameters.Contains(txtParameters.Text)) {
+        MilkDropMessenger.Properties.Settings.Default.Parameters.Insert(0, txtParameters.Text);
+        if (MilkDropMessenger.Properties.Settings.Default.Parameters?.Count > 10) {
+          MilkDropMessenger.Properties.Settings.Default.Parameters.RemoveAt(10);
+        }
+        MilkDropMessenger.Properties.Settings.Default.Save();
+      }
+      if (MilkDropMessenger.Properties.Settings.Default.Parameters?.Count > 0) {
+        txtParameters.Items.Clear();
+        txtParameters.Items.AddRange(MilkDropMessenger.Properties.Settings.Default.Parameters.Cast<string>().ToArray());
+      }
+      txtParameters.Refresh();
     }
   }
 }

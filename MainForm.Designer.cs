@@ -38,9 +38,10 @@
       label3 = new Label();
       linkLabel1 = new LinkLabel();
       label4 = new Label();
-      txtParameters = new TextBox();
+      txtParameters = new ComboBox();
       label5 = new Label();
       linkLabel2 = new LinkLabel();
+      btnSaveParam = new Button();
       statusStrip1.SuspendLayout();
       SuspendLayout();
       // 
@@ -49,14 +50,14 @@
       txtMessage.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
       txtMessage.Location = new Point(114, 45);
       txtMessage.Name = "txtMessage";
-      txtMessage.Size = new Size(680, 27);
+      txtMessage.Size = new Size(643, 27);
       txtMessage.TabIndex = 0;
       txtMessage.Text = "Test";
       // 
       // button1
       // 
       button1.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-      button1.Location = new Point(803, 15);
+      button1.Location = new Point(766, 15);
       button1.Margin = new Padding(0);
       button1.Name = "button1";
       button1.Size = new Size(91, 91);
@@ -70,7 +71,7 @@
       txtWindowTitle.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
       txtWindowTitle.Location = new Point(114, 12);
       txtWindowTitle.Name = "txtWindowTitle";
-      txtWindowTitle.Size = new Size(558, 27);
+      txtWindowTitle.Size = new Size(521, 27);
       txtWindowTitle.TabIndex = 2;
       txtWindowTitle.Text = "MilkDrop 3";
       // 
@@ -86,7 +87,7 @@
       // label2
       // 
       label2.AutoSize = true;
-      label2.Location = new Point(41, 49);
+      label2.Location = new Point(41, 48);
       label2.Name = "label2";
       label2.Size = new Size(67, 20);
       label2.TabIndex = 4;
@@ -98,7 +99,7 @@
       statusStrip1.Items.AddRange(new ToolStripItem[] { statusBar });
       statusStrip1.Location = new Point(0, 418);
       statusStrip1.Name = "statusStrip1";
-      statusStrip1.Size = new Size(906, 22);
+      statusStrip1.Size = new Size(869, 22);
       statusStrip1.TabIndex = 5;
       statusStrip1.Text = "statusStrip1";
       // 
@@ -110,9 +111,9 @@
       // label3
       // 
       label3.Font = new Font("Consolas", 7.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
-      label3.Location = new Point(12, 121);
+      label3.Location = new Point(12, 119);
       label3.Name = "label3";
-      label3.Size = new Size(885, 261);
+      label3.Size = new Size(845, 261);
       label3.TabIndex = 6;
       label3.Text = resources.GetString("label3.Text");
       // 
@@ -136,21 +137,22 @@
       label4.Size = new Size(82, 20);
       label4.TabIndex = 9;
       label4.Text = "Parameters";
+      label4.DoubleClick += label4_DoubleClick;
       // 
       // txtParameters
       // 
       txtParameters.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+      txtParameters.DropDownStyle = ComboBoxStyle.DropDownList;
       txtParameters.Location = new Point(114, 78);
       txtParameters.Name = "txtParameters";
-      txtParameters.Size = new Size(680, 27);
+      txtParameters.Size = new Size(549, 28);
       txtParameters.TabIndex = 8;
-      txtParameters.Text = "font=Consolas|size=32|time=3.5|x=0.5|y=0.5|bold=1|r=255|randg=100|growth=2.0";
       // 
       // label5
       // 
       label5.Anchor = AnchorStyles.Top | AnchorStyles.Right;
       label5.AutoSize = true;
-      label5.Location = new Point(678, 15);
+      label5.Location = new Point(641, 15);
       label5.Name = "label5";
       label5.Size = new Size(116, 20);
       label5.TabIndex = 10;
@@ -160,19 +162,32 @@
       // 
       linkLabel2.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
       linkLabel2.AutoSize = true;
-      linkLabel2.Location = new Point(675, 391);
+      linkLabel2.Location = new Point(638, 391);
       linkLabel2.Name = "linkLabel2";
-      linkLabel2.Size = new Size(219, 20);
+      linkLabel2.Size = new Size(218, 20);
       linkLabel2.TabIndex = 11;
       linkLabel2.TabStop = true;
-      linkLabel2.Text = "MilkDrop Messenger on GitHob";
+      linkLabel2.Text = "MilkDrop Messenger on GitHub";
       linkLabel2.LinkClicked += linkLabel2_LinkClicked;
+      // 
+      // btnSaveParam
+      // 
+      btnSaveParam.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+      btnSaveParam.Location = new Point(671, 78);
+      btnSaveParam.Margin = new Padding(0);
+      btnSaveParam.Name = "btnSaveParam";
+      btnSaveParam.Size = new Size(86, 28);
+      btnSaveParam.TabIndex = 12;
+      btnSaveParam.Text = "Save";
+      btnSaveParam.UseVisualStyleBackColor = true;
+      btnSaveParam.Click += btnSaveParam_Click;
       // 
       // MainForm
       // 
       AutoScaleDimensions = new SizeF(8F, 20F);
       AutoScaleMode = AutoScaleMode.Font;
-      ClientSize = new Size(906, 440);
+      ClientSize = new Size(869, 440);
+      Controls.Add(btnSaveParam);
       Controls.Add(linkLabel2);
       Controls.Add(label5);
       Controls.Add(label4);
@@ -207,8 +222,9 @@
     private Label label3;
     private LinkLabel linkLabel1;
     private Label label4;
-    private TextBox txtParameters;
+    private ComboBox txtParameters;
     private Label label5;
     private LinkLabel linkLabel2;
+    private Button btnSaveParam;
   }
 }
