@@ -1,4 +1,4 @@
-namespace MilkDropMessager
+namespace MilkDropMessenger
 {
     internal static class Program
     {
