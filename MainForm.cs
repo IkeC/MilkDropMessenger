@@ -1,5 +1,6 @@
 using DarkModeForms;
 using System.Diagnostics;
+using System.Drawing.Text;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -22,6 +23,10 @@ namespace MilkDropMessenger {
     private const uint WM_COPYDATA = 0x004A;
 
     private DarkModeCS dm;
+    private System.Windows.Forms.Timer autoplayTimer;
+    private int currentLineIndex = 0;
+    private int autoplayRemainingS = 1;
+    List<string> lines = new List<string>();
 
     [StructLayout(LayoutKind.Sequential)]
     private struct COPYDATASTRUCT {
@@ -34,30 +39,44 @@ namespace MilkDropMessenger {
       InitializeComponent();
 
       dm = new DarkModeCS(this) {
-        //[Optional] Choose your preferred color mode here:
         ColorMode = DarkModeCS.DisplayMode.SystemDefault
       };
 
-#pragma warning disable CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate (possibly because of nullability attributes).
       txtMessage.KeyDown += new KeyEventHandler(txtBoxes_KeyDown);
       txtParameters.KeyDown += new KeyEventHandler(txtBoxes_KeyDown);
-#pragma warning restore CS8622 // Nullability of reference types in type of parameter doesn't match the target delegate (possibly because of nullability attributes).
 
-      // txtParameters.AutoCompleteSource = AutoCompleteSource.CustomSource;
-      // txtParameters.AutoCompleteCustomSource = new AutoCompleteStringCollection();
       txtParameters.DropDownStyle = ComboBoxStyle.DropDown;
       txtParameters.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
       if (MilkDropMessenger.Properties.Settings.Default.Parameters?.Count > 0) {
         txtParameters.Items.AddRange(MilkDropMessenger.Properties.Settings.Default.Parameters.Cast<string>().ToArray());
         txtParameters.Text = MilkDropMessenger.Properties.Settings.Default.Parameters[0];
       } else {
-        txtParameters.Text = "font=Arial|size=32|time=3.5|x=0.5|y=0.5|bold=1|r=255|g=0|b=0|growth=2.0";
+        txtParameters.Text = "size=35|time=5.0|x=0.5|y=0.5|growth=1.5";
       }
+
+      // Fill cboFonts with available system fonts and add a blank first entry
+      cboFonts.Items.Add(""); // Add a blank first entry
+      using (InstalledFontCollection fontsCollection = new InstalledFontCollection()) {
+        foreach (FontFamily font in fontsCollection.Families) {
+          cboFonts.Items.Add(font.Name);
+        }
+      }
+
+      LoadMessages();
+
+      autoplayTimer = new System.Windows.Forms.Timer();
+      autoplayTimer.Tick += AutoplayTimer_Tick;
     }
 
     private void button1_Click(object sender, EventArgs e) {
+      SendToMilkdrop(txtMessage.Text);
+      txtMessage.Focus();
+      txtMessage.SelectAll();
+    }
+
+    private void SendToMilkdrop(string messageToSend) {
       statusBar.Text = "";
-      string partialTitle = txtWindowTitle.Text; // Replace with the actual partial title
+      string partialTitle = txtWindowTitle.Text;
       IntPtr foundWindow = IntPtr.Zero;
       StringBuilder foundWindowTitle = new StringBuilder();
 
@@ -78,9 +97,17 @@ namespace MilkDropMessenger {
       }, IntPtr.Zero);
 
       if (foundWindow != IntPtr.Zero) {
-        string message = "MSG|text=" + txtMessage.Text;
+        string message = "MSG|text=" + messageToSend;
         if (txtParameters.Text.Length > 0) {
           message += "|" + txtParameters.Text;
+        }
+        if (!message.Contains("font=")) {
+          message += "|font=" + cboFonts.Text;
+        }
+        if (!message.Contains("r=") && !message.Contains("g=") && !message.Contains("b=")) {
+          message += "|r=" + pnlColor.BackColor.R;
+          message += "|g=" + pnlColor.BackColor.G;
+          message += "|b=" + pnlColor.BackColor.B;
         }
         byte[] messageBytes = Encoding.Unicode.GetBytes(message);
         IntPtr messagePtr = Marshal.AllocHGlobal(messageBytes.Length);
@@ -95,17 +122,14 @@ namespace MilkDropMessenger {
         SendMessageW(foundWindow, WM_COPYDATA, IntPtr.Zero, ref cds);
         statusBar.Text = ($"Sent message to window titled '{foundWindowTitle}'");
 
-
         Marshal.FreeHGlobal(messagePtr);
 
-        txtMessage.Focus();
-        txtMessage.SelectAll();
       } else {
         statusBar.Text = "Window not found.";
       }
     }
 
-    private void txtBoxes_KeyDown(object sender, KeyEventArgs e) {
+    private void txtBoxes_KeyDown(object? sender, KeyEventArgs e) {
       if (e.KeyCode == Keys.Enter) {
         e.SuppressKeyPress = true; // Prevent the beep sound on Enter key press
         button1.PerformClick();
@@ -124,6 +148,8 @@ namespace MilkDropMessenger {
     private void MainForm_Shown(object sender, EventArgs e) {
       txtMessage.Focus();
       txtMessage.SelectAll();
+      pnlColor.BackColor = Color.FromArgb(230, 0, 120);
+      colorDialog1.Color = pnlColor.BackColor;
     }
 
     private void OpenURL(string url) {
@@ -150,6 +176,86 @@ namespace MilkDropMessenger {
         txtParameters.Items.AddRange(MilkDropMessenger.Properties.Settings.Default.Parameters.Cast<string>().ToArray());
       }
       txtParameters.Refresh();
+    }
+
+    private void chkAutoplay_CheckedChanged(object sender, EventArgs e) {
+      if (chkAutoplay.Checked) {
+        if (int.TryParse(txtWait.Text, out int interval)) {
+          autoplayRemainingS = 1;
+          autoplayTimer.Interval = 1000;
+          autoplayTimer.Start();
+        } else {
+          statusBar.Text = "Invalid wait value. Please enter a valid number.";
+        }
+      } else {
+        autoplayTimer.Stop();
+        statusBar.Text = "";
+        autoplayRemainingS = 1;
+      }
+    }
+
+    private void AutoplayTimer_Tick(object? sender, EventArgs e) {
+      if (lines.Count > 0) {
+        if (autoplayRemainingS == 0) {
+          SendToMilkdrop(lines[currentLineIndex]);
+          currentLineIndex = (currentLineIndex + 1) % lines.Count;
+          autoplayRemainingS = int.Parse(txtWait.Text);
+        } else {
+          txtAutoplay.Text = lines[currentLineIndex];
+          statusBar.Text = $"Next autoplay line in {autoplayRemainingS} seconds.";
+          autoplayRemainingS--;
+        }
+      }
+    }
+
+    private void btnFontAppend_Click(object sender, EventArgs e) {
+      if (!txtParameters.Text.Contains("font=")) {
+        txtParameters.Text += "|font=" + cboFonts.Text;
+      } else {
+        statusBar.Text = "Font already defined.";
+      }
+    }
+
+    private void textBox1_Click(object sender, EventArgs e) {
+      if (colorDialog1.ShowDialog() == DialogResult.OK) {
+        button1.BackColor = colorDialog1.Color;
+      }
+    }
+
+    private void pnlColor_Click(object sender, EventArgs e) {
+      if (colorDialog1.ShowDialog() == DialogResult.OK) {
+        pnlColor.BackColor = colorDialog1.Color;
+      }
+    }
+
+    private void btnAppendColor_Click(object sender, EventArgs e) {
+      if (!txtParameters.Text.Contains("r=") && !txtParameters.Text.Contains("g=") && !txtParameters.Text.Contains("b=")) {
+        txtParameters.Text += "|r=" + pnlColor.BackColor.R;
+        txtParameters.Text += "|g=" + pnlColor.BackColor.G;
+        txtParameters.Text += "|b=" + pnlColor.BackColor.B;
+      } else {
+        statusBar.Text = "Color already defined.";
+      }
+    }
+
+    private void label6_DoubleClick(object sender, EventArgs e) {
+      LoadMessages();
+    }
+  
+  private void LoadMessages() {
+      currentLineIndex = 0;
+      lines.Clear();
+      string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MilkDropMessenger.txt");
+      if (File.Exists(filePath)) {
+        lines.AddRange(File.ReadAllLines(filePath));
+      }
+
+      if (lines?.Count > 0) {
+        txtAutoplay.Text = lines[currentLineIndex];
+      } else {
+        txtAutoplay.Text = "No messages in MilkDropMessenger.txt";
+        chkAutoplay.Enabled = false;
+      }
     }
   }
 }
