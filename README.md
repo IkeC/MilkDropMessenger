@@ -1,12 +1,13 @@
 # MilkDrop Messenger
 
-Send messages to an open [MilkDrop 3](https://github.com/milkdrop2077/MilkDrop3) window.
+Send custom messages and key combinations to an open [MilkDrop 3](https://github.com/milkdrop2077/MilkDrop3) window.
 
 ## Features
 
 * Customize message text, color, font size and other parameters
 * Save up to 10 message presets for quick access
 * Automatically send messages at regular intervals from *MilkDropMessenger.txt*
+* Send common key combinations using buttons
 
 ## Requirements
 
@@ -16,4 +17,6 @@ Send messages to an open [MilkDrop 3](https://github.com/milkdrop2077/MilkDrop3)
 
 ## Support
 
-I may add new features or fix bugs if anyone is actually using this, so feel free to open an issue or join [my Discord](https://bit.ly/Ikes-Discord)! If you feel generous, here's my [PayPal account](https://www.paypal.com/donate/?hosted_button_id=MBQLZS5K3X5X6).
+I may add new features or fix bugs if anyone is actually using this, so feel free to open an issue or join [my Discord](https://bit.ly/Ikes-Discord)! 
+
+If you want to support my work, here's my [PayPal account](https://www.paypal.com/donate/?hosted_button_id=MBQLZS5K3X5X6).

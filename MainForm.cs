@@ -18,9 +18,24 @@ namespace MilkDropMessenger {
     [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
     private static extern IntPtr SendMessageW(IntPtr hWnd, uint Msg, IntPtr wParam, ref COPYDATASTRUCT lParam);
 
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern IntPtr PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
+
+    [DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
+
     private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
 
     private const uint WM_COPYDATA = 0x004A;
+    private const uint WM_KEYDOWN = 0x0100;
+    private const uint WM_KEYUP = 0x0101;
+    private const int VK_TILDE = 0xC0;
 
     private DarkModeCS dm;
     private System.Windows.Forms.Timer autoplayTimer;
@@ -33,6 +48,48 @@ namespace MilkDropMessenger {
       public IntPtr dwData;
       public int cbData;
       public IntPtr lpData;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct INPUT {
+      public uint type;
+      public InputUnion u;
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    private struct InputUnion {
+      [FieldOffset(0)]
+      public MOUSEINPUT mi;
+      [FieldOffset(0)]
+      public KEYBDINPUT ki;
+      [FieldOffset(0)]
+      public HARDWAREINPUT hi;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MOUSEINPUT {
+      public int dx;
+      public int dy;
+      public uint mouseData;
+      public uint dwFlags;
+      public uint time;
+      public IntPtr dwExtraInfo;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct KEYBDINPUT {
+      public ushort wVk;
+      public ushort wScan;
+      public uint dwFlags;
+      public uint time;
+      public IntPtr dwExtraInfo;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct HARDWAREINPUT {
+      public uint uMsg;
+      public ushort wParamL;
+      public ushort wParamH;
     }
 
     public MainForm() {
@@ -241,8 +298,8 @@ namespace MilkDropMessenger {
     private void label6_DoubleClick(object sender, EventArgs e) {
       LoadMessages();
     }
-  
-  private void LoadMessages() {
+
+    private void LoadMessages() {
       currentLineIndex = 0;
       lines.Clear();
       string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MilkDropMessenger.txt");
@@ -257,5 +314,325 @@ namespace MilkDropMessenger {
         chkAutoplay.Enabled = false;
       }
     }
+
+    private void SendPostMessage(int VKKey, string keyName) {
+      IntPtr foundWindow = IntPtr.Zero;
+
+      EnumWindows((hWnd, lParam) => {
+        int length = GetWindowTextLength(hWnd);
+        if (length == 0) return true;
+
+        StringBuilder windowTitle = new StringBuilder(length + 1);
+        GetWindowText(hWnd, windowTitle, windowTitle.Capacity);
+
+        if (windowTitle.ToString().Contains(txtWindowTitle.Text)) {
+          foundWindow = hWnd;
+          return false; // Stop enumeration
+        }
+
+        return true; // Continue enumeration
+      }, IntPtr.Zero);
+
+      if (foundWindow != IntPtr.Zero) {
+        PostMessage(foundWindow, WM_KEYDOWN, (IntPtr)VKKey, IntPtr.Zero);
+        statusBar.Text = $"Pressed {keyName} in the Milkdrop window.";
+      } else {
+        statusBar.Text = "Milkdrop window not found.";
+      }
+    }
+
+    private const int VK_SHIFT = 0x10;
+    private const int VK_ALT = 0x12;
+
+    private void SendInput(int VKKey, string keyName, bool doShift, bool doAlt) {
+      IntPtr currentWindow = GetForegroundWindow();
+      string partialTitle = txtWindowTitle.Text;
+      IntPtr foundWindow = IntPtr.Zero;
+
+      EnumWindows((hWnd, lParam) => {
+        int length = GetWindowTextLength(hWnd);
+        if (length == 0) return true;
+
+        StringBuilder windowTitle = new StringBuilder(length + 1);
+        GetWindowText(hWnd, windowTitle, windowTitle.Capacity);
+
+        if (windowTitle.ToString().Contains(partialTitle)) {
+          foundWindow = hWnd;
+          return false; // Stop enumeration
+        }
+
+        return true; // Continue enumeration
+      }, IntPtr.Zero);
+
+      if (foundWindow != IntPtr.Zero) {
+        SetForegroundWindow(foundWindow);
+
+        INPUT[] inputs;
+
+        if (doShift) {
+          inputs = new INPUT[4];
+
+          inputs[0] = new INPUT {
+            type = 1, // Keyboard input
+            u = new InputUnion {
+              ki = new KEYBDINPUT {
+                wVk = VK_SHIFT,
+                dwFlags = 0 // Key down
+              }
+            }
+          };
+
+          inputs[1] = new INPUT {
+            type = 1, // Keyboard input
+            u = new InputUnion {
+              ki = new KEYBDINPUT {
+                wVk = (ushort)VKKey,
+                dwFlags = 0 // Key down
+              }
+            }
+          };
+
+          inputs[2] = new INPUT {
+            type = 1, // Keyboard input
+            u = new InputUnion {
+              ki = new KEYBDINPUT {
+                wVk = (ushort)VKKey,
+                dwFlags = 2 // Key up
+              }
+            }
+          };
+
+          inputs[3] = new INPUT {
+            type = 1, // Keyboard input
+            u = new InputUnion {
+              ki = new KEYBDINPUT {
+                wVk = VK_SHIFT,
+                dwFlags = 2 // Key up
+              }
+            }
+          };
+        } else if (doAlt) {
+          inputs = new INPUT[4];
+
+          inputs[0] = new INPUT {
+            type = 1, // Keyboard input
+            u = new InputUnion {
+              ki = new KEYBDINPUT {
+                wVk = VK_ALT,
+                dwFlags = 0 // Key down
+              }
+            }
+          };
+
+          inputs[1] = new INPUT {
+            type = 1, // Keyboard input
+            u = new InputUnion {
+              ki = new KEYBDINPUT {
+                wVk = (ushort)VKKey,
+                dwFlags = 0 // Key down
+              }
+            }
+          };
+
+          inputs[2] = new INPUT {
+            type = 1, // Keyboard input
+            u = new InputUnion {
+              ki = new KEYBDINPUT {
+                wVk = (ushort)VKKey,
+                dwFlags = 2 // Key up
+              }
+            }
+          };
+
+          inputs[3] = new INPUT {
+            type = 1, // Keyboard input
+            u = new InputUnion {
+              ki = new KEYBDINPUT {
+                wVk = VK_ALT,
+                dwFlags = 2 // Key up
+              }
+            }
+          };
+        } else {
+          inputs = new INPUT[2];
+
+          inputs[0] = new INPUT {
+            type = 1, // Keyboard input
+            u = new InputUnion {
+              ki = new KEYBDINPUT {
+                wVk = (ushort)VKKey,
+                dwFlags = 0 // Key down
+              }
+            }
+          };
+
+          inputs[1] = new INPUT {
+            type = 1, // Keyboard input
+            u = new InputUnion {
+              ki = new KEYBDINPUT {
+                wVk = (ushort)VKKey,
+                dwFlags = 2 // Key up
+              }
+            }
+          };
+        }
+
+        SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
+        statusBar.Text = $"Pressed {keyName} in the Milkdrop window.";
+
+        SetForegroundWindow(currentWindow);
+      } else {
+        statusBar.Text = "Milkdrop window not found.";
+      }
+    }
+
+    private const int VK_F3 = 0x72;
+
+    private void btnF3_Click(object sender, EventArgs e) {
+      SendPostMessage(VK_F3, "F3");
+    }
+
+    private const int VK_F4 = 0x73;
+
+    private void btnF4_Click(object sender, EventArgs e) {
+      SendPostMessage(VK_F4, "F4");
+    }
+
+    private const int VK_F7 = 0x76;
+
+    private void btnF7_Click(object sender, EventArgs e) {
+      SendPostMessage(VK_F7, "F7");
+    }
+
+    private const int VK_K = 0x4B;
+
+    private void btnShiftK_Click(object sender, EventArgs e) {
+      SendInput(VK_K, "Shift+K", true, false);
+    }
+
+    private const int VK_SPACE = 0x20;
+
+    private void btnSpace_Click(object sender, EventArgs e) {
+      SendPostMessage(VK_SPACE, "Space");
+    }
+
+    private const int VK_BACKSPACE = 0x08;
+
+    private void btnBackspace_Click(object sender, EventArgs e) {
+      SendPostMessage(VK_BACKSPACE, "Backspace");
+    }
+
+    private void SendUnicodeChars(string inputString) {
+      IntPtr foundWindow = IntPtr.Zero;
+      IntPtr currentWindow = GetForegroundWindow();
+
+      EnumWindows((hWnd, lParam) => {
+        int length = GetWindowTextLength(hWnd);
+        if (length == 0) return true;
+
+        StringBuilder windowTitle = new StringBuilder(length + 1);
+        GetWindowText(hWnd, windowTitle, windowTitle.Capacity);
+
+        if (windowTitle.ToString().Contains(txtWindowTitle.Text)) {
+          foundWindow = hWnd;
+          return false; // Stop enumeration
+        }
+
+        return true; // Continue enumeration
+      }, IntPtr.Zero);
+
+      if (foundWindow != IntPtr.Zero) {
+        SetForegroundWindow(foundWindow);
+
+
+        for (int i = 0; i < inputString.Length; i++) {
+          INPUT[] inputs = new INPUT[1];
+          inputs[0] = new INPUT {
+            type = 1, // Keyboard input
+            u = new InputUnion {
+              ki = new KEYBDINPUT {
+                wVk = 0,
+                wScan = (ushort)inputString[i],
+                dwFlags = 4, // KEYEVENTF_UNICODE
+                time = 0,
+                dwExtraInfo = IntPtr.Zero
+              }
+            }
+          };
+          SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
+          Thread.Sleep(50);
+        }
+
+        statusBar.Text = $"Pressed {inputString} in the Milkdrop window.";
+
+        SetForegroundWindow(currentWindow);
+
+      } else {
+        statusBar.Text = "Milkdrop window not found.";
+      }
+    }
+
+    private void btnTilde_Click(object sender, EventArgs e) {
+      SendUnicodeChars("~");
+    }
+
+    private const int VK_DELETE = 0x2E;
+
+    private void btnDelete_Click(object sender, EventArgs e) {
+      SendPostMessage(VK_DELETE, "Delete");
+    }
+
+    private const int VK_ENTER = 0x0D;
+
+    private void btnAltEnter_Click(object sender, EventArgs e) {
+      SendInput(VK_ENTER, "Alt+Enter", false, true);
+    }
+
+    private void btnN_Click(object sender, EventArgs e) {
+      SendUnicodeChars("N");
+    }
+
+    private const int VK_F8 = 0x77;
+
+    private void btnF8_Click(object sender, EventArgs e) {
+      SendPostMessage(VK_F8, "F8");
+    }
+
+    private void btnC_Click(object sender, EventArgs e) {
+      SendUnicodeChars("C");
+    }
+
+    private void btn00_Click(object sender, EventArgs e) {
+      SendUnicodeChars("00");
+    }
+
+    private void btn11_Click(object sender, EventArgs e) {
+      SendUnicodeChars("11");
+    }
+
+    private void btnm22_Click(object sender, EventArgs e) {
+      SendUnicodeChars("22");
+    }
+
+    private void btn33_Click(object sender, EventArgs e) {
+      SendUnicodeChars("33");
+    }
+
+    private void btn44_Click(object sender, EventArgs e) {
+      SendUnicodeChars("44");
+    }
+
+    private void btn55_Click(object sender, EventArgs e) {
+      SendUnicodeChars("55");
+    }
+
+    private void btn66_Click(object sender, EventArgs e) {
+      SendUnicodeChars("66");
+    }
+
+    private void btn77_Click(object sender, EventArgs e) {
+      SendUnicodeChars("77");
+    }
+
   }
 }
