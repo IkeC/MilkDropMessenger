@@ -110,6 +110,7 @@
       pnlColor.Size = new Size(56, 27);
       pnlColor.TabIndex = 7;
       toolTip1.SetToolTip(pnlColor, "Only used if no r, g, b parameters supplied");
+      pnlColor.Click += pnlColor_Click;
       // 
       // bnAppendColor
       // 

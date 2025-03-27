@@ -1,6 +1,7 @@
 using DarkModeForms;
 using System.Diagnostics;
 using System.Drawing.Text;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -95,6 +96,11 @@ namespace MilkDropMessenger {
     public MainForm() {
       InitializeComponent();
 
+      Assembly executingAssembly = Assembly.GetExecutingAssembly();
+      var fieVersionInfo = FileVersionInfo.GetVersionInfo(executingAssembly.Location);
+      var version = fieVersionInfo.FileVersion;
+      this.Text = $"MilkDrop Messenger {version}";
+
       dm = new DarkModeCS(this) {
         ColorMode = DarkModeCS.DisplayMode.SystemDefault
       };
@@ -177,7 +183,7 @@ namespace MilkDropMessenger {
         };
 
         SendMessageW(foundWindow, WM_COPYDATA, IntPtr.Zero, ref cds);
-        statusBar.Text = ($"Sent message to window titled '{foundWindowTitle}'");
+        statusBar.Text = ($"Sent '{messageToSend}' to '{foundWindowTitle}'");
 
         Marshal.FreeHGlobal(messagePtr);
 
@@ -589,7 +595,7 @@ namespace MilkDropMessenger {
     }
 
     private void btnN_Click(object sender, EventArgs e) {
-      SendUnicodeChars("N");
+      SendUnicodeChars("n");
     }
 
     private const int VK_F8 = 0x77;
@@ -599,7 +605,7 @@ namespace MilkDropMessenger {
     }
 
     private void btnC_Click(object sender, EventArgs e) {
-      SendUnicodeChars("C");
+      SendUnicodeChars("c");
     }
 
     private void btn00_Click(object sender, EventArgs e) {
