@@ -273,7 +273,7 @@
       bnAppendColor.Size = new Size(84, 30);
       bnAppendColor.TabIndex = 23;
       bnAppendColor.Text = "Append";
-      toolTip1.SetToolTip(bnAppendColor, "Append to parameters string above if no font already defined");
+      toolTip1.SetToolTip(bnAppendColor, "Append to parameters string above if no color already defined");
       bnAppendColor.UseVisualStyleBackColor = true;
       bnAppendColor.Click += btnAppendColor_Click;
       // 

@@ -13,3 +13,7 @@ Send messages to an open [MilkDrop 3](https://github.com/milkdrop2077/MilkDrop3)
 * Windows 7 or later
 * MilkDrop 3.28 or later
 * [Microsoft .NET Desktop Runtime 8](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+
+## Support
+
+I may add new features or fix bugs if anyone is actually using this, so feel free to open an issue or join [my Discord](https://bit.ly/Ikes-Discord)! If you feel generous, here's my [PayPal account](https://www.paypal.com/donate/?hosted_button_id=MBQLZS5K3X5X6).
