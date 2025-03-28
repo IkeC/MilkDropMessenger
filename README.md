@@ -2,6 +2,8 @@
 
 Send custom messages and key combinations to an open [MilkDrop 3](https://github.com/milkdrop2077/MilkDrop3) window.
 
+![image](https://github.com/user-attachments/assets/6e3217d3-4f18-4eaf-945f-fae18e37b327)
+
 ## Features
 
 * Customize message text, color, font size and other parameters
