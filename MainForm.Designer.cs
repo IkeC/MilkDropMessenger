@@ -202,6 +202,7 @@
       label6.TabIndex = 56;
       label6.Text = "Autoplay";
       toolTip1.SetToolTip(label6, "Double-click to reload file MilkDropMessenger.txt");
+      label6.DoubleClick += label6_DoubleClick;
       // 
       // chkAutoplay
       // 

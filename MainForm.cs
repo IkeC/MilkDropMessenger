@@ -301,10 +301,6 @@ namespace MilkDropMessenger {
       }
     }
 
-    private void label6_DoubleClick(object sender, EventArgs e) {
-      LoadMessages();
-    }
-
     private void LoadMessages() {
       currentLineIndex = 0;
       lines.Clear();
@@ -640,5 +636,8 @@ namespace MilkDropMessenger {
       SendUnicodeChars("77");
     }
 
+    private void label6_DoubleClick(object sender, EventArgs e) {
+      LoadMessages();
+    }
   }
 }
